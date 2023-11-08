@@ -2,8 +2,11 @@
 
 # CMD
 ```
+systeminfo
+bcdedit /enum
+bcdedit /set hypervisorlaunchtype off
 wsl --list --online
-wsl --install -d Ubuntu-22.04
+wsl --install Ubuntu
 shutdown -r
 ```
 
