@@ -4,6 +4,7 @@
 ```
 wsl --list --online
 wsl --install -d Ubuntu-22.04
+shutdown -r
 ```
 
 # WSL
@@ -17,5 +18,5 @@ password: ady78945
 wsl
 apt update -y
 apt install ansible -y
-ansible local -m ping
+ansible localhost -m ping
 ```
