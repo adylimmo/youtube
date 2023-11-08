@@ -1,12 +1,7 @@
 # Windows 10 Pro
 
-# Download GitBash
-```
-https://git-scm.com/downloads
-```
-
-
 # CMD
 ```
-
+wsl --list --online
+wsl --install -d Ubuntu-22.04
 ```
