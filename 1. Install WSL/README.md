@@ -11,3 +11,10 @@ wsl --install -d Ubuntu-22.04
 username: ady
 password: ady78945
 ```
+
+# CMD
+```
+wsl
+apt update -y
+apt install ansible -y
+```
