@@ -1,28 +1,28 @@
 # Prerequisite
 
 ```
-Windows 10 - Remote Node
+VirtualBox Name : youtube-win10
 IP :
 User : userpc
 Password : userpc123456
 ```
 
 ```
-Ubuntu 22 - Docker Node
+VirtualBox Name : youtube-docker
 IP :
 User : ubuntu
 Password : ubuntu
 ```
 
 ```
-Ubuntu 22 - Node 1
+VirtualBox Name : youtube-rancher1
 IP :
 User : ubuntu
 Password : ubuntu
 ```
 
 ```
-Ubuntu 22 - Node 2
+VirtualBox Name : youtube-rancher2
 IP :
 User : ubuntu
 Password : ubuntu
