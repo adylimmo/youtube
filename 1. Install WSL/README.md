@@ -17,4 +17,5 @@ password: ady78945
 wsl
 apt update -y
 apt install ansible -y
+ansible local -m ping
 ```
