@@ -24,6 +24,6 @@ Password : ubuntu
 ```
 Windows 10
 IP :
-User : Administrator
-Password : !@#$YoutubeAdy
+User : userpc
+Password : userpc123456
 ```
