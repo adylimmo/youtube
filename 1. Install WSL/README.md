@@ -1,9 +1,7 @@
 # Windows 10 Pro
 
-# CMD as Admin
+# Powershell as Admin
 ```
-wsl --update
-wsl --set-default-version 1
 wsl --list -o
 wsl --install -d Ubuntu
 ```
