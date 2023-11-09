@@ -7,6 +7,7 @@ User : userpc
 Password : userpc123456
 RAM : 6 GB
 CPU : 2 
+enable nested vt-x/amd-v
 ```
 
 ```
@@ -16,6 +17,7 @@ User : ubuntu
 Password : ubuntu
 RAM : 6 GB
 CPU : 2
+enable nested vt-x/amd-v
 ```
 
 ```
@@ -25,6 +27,7 @@ User : ubuntu
 Password : ubuntu
 RAM : 6 GB
 CPU : 2
+enable nested vt-x/amd-v
 ```
 
 ![alt text](virtualbox-gambar.png)
