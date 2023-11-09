@@ -1,6 +1,6 @@
 # Windows 10 Pro
 
-# CMD
+# CMD as Admin
 ```
 wsl --update
 wsl --set-default-version 1
@@ -14,7 +14,7 @@ username: ady
 password: ady78945
 ```
 
-# CMD
+# CMD as Admin
 ```
 wsl
 apt update -y

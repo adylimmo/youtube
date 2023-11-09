@@ -15,18 +15,12 @@ Password : ubuntu
 ```
 
 ```
-VirtualBox Name : youtube-rancher1
+VirtualBox Name : youtube-rancher
 IP : 192.168.0.223
 User : ubuntu
 Password : ubuntu
 ```
 
-```
-VirtualBox Name : youtube-rancher2
-IP : 192.168.0.224
-User : ubuntu
-Password : ubuntu
-```
 
 
 
