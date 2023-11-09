@@ -2,12 +2,10 @@
 
 # CMD
 ```
-systeminfo
-bcdedit /enum
-bcdedit /set hypervisorlaunchtype off
-wsl --list --online
-wsl --install Ubuntu
-shutdown -r
+wsl --update
+wsl --set-default-version 1
+wsl --list -o
+wsl --install -d Ubuntu
 ```
 
 # WSL
