@@ -2,7 +2,6 @@
 
 # Powershell as Admin
 ```
-systeminfo
 wsl --list -o
 wsl --install -d Ubuntu
 ```
@@ -26,6 +25,7 @@ ansible localhost -m ping
 # Troubleshoot
 
 ```
+systeminfo
 wsl --update
 wsl --set-default-version 1
 ```
