@@ -21,11 +21,11 @@
         - git
         - wget
 
-    - name: Download kubectl
-      get_url:
-        url: "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl"
-        dest: /usr/local/bin/kubectl
-        mode: 'a+x'
+    - name: install Kubectl
+      apt:
+        name: kubectl=1.28.*
+        state: present
+        force: yes
 
     - name: Configure kubectl
       lineinfile:
