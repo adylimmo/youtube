@@ -21,19 +21,7 @@
         - git
         - wget
 
-    - name: install Kubectl
-      apt:
-        name: kubectl=1.28.*
-        state: present
-        force: yes
-
-    - name: Configure kubectl
-      lineinfile:
-        path: $HOME/.kube/config
-        line: "{{ lookup('env','KUBECONFIG') }}"
-
-    - name: Add kubectl completion
-      shell: kubectl completion bash >> $HOME/.bashrc
+    
 
 
     - name: Get RKE latest release URL

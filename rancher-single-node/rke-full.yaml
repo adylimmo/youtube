@@ -1,0 +1,192 @@
+---
+- hosts: localhost
+  connection: local
+  tasks:
+    - name: Update and upgrade packages
+      apt:
+        update_cache: yes
+        upgrade: yes
+
+    - name: Install required packages
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - apt-transport-https
+        - ca-certificates
+        - curl
+        - gnupg
+        - lsb-release
+        - git
+        - wget
+
+    - name: Install kubectl
+      shell: |
+        curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+        chmod +x ./kubectl
+        sudo mv ./kubectl /usr/local/bin/kubectl
+        kubectl version --client
+
+    - name: Install rke
+      shell: |
+        curl -s https://api.github.com/repos/rancher/rke/releases/latest | grep download_url | grep amd64 | cut -d '"' -f 4 | wget -qi -
+        chmod +x rke_linux-amd64
+        sudo mv rke_linux-amd64 /usr/local/bin/rke
+        rke --version
+
+    - name: Install Helm 3
+      shell: |
+        curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
+        chmod 700 get_helm.sh
+        ./get_helm.sh
+        helm version
+
+    - name: Enable kernel modules
+      shell: |
+        for module in br_netfilter ip6_udp_tunnel ip_set ip_set_hash_ip ip_set_hash_net iptable_filter iptable_nat iptable_mangle iptable_raw nf_conntrack_netlink nf_conntrack nf_conntrack_ipv4 nf_defrag_ipv4 nf_nat nf_nat_ipv4 nf_nat_masquerade_ipv4 nfnetlink udp_tunnel veth vxlan x_tables xt_addrtype xt_conntrack xt_comment xt_mark xt_multiport xt_nat xt_recent xt_set xt_statistic xt_tcpudp; do
+          if ! lsmod | grep -q $module; then
+            echo "module $module is not present";
+            sudo modprobe $module
+          fi;
+        done
+
+    - name: Disable swap
+      lineinfile:
+        path: /etc/fstab
+        state: present
+        line: "# {{ ansible_managed }} Added by Ansible"
+      become: yes
+      become_user: root
+
+    - name: Turn off swap
+      shell: sudo swapoff -a
+
+    - name: Configure sysctl settings
+      copy:
+        dest: "/etc/sysctl.d/99-kubernetes.conf"
+        content: |
+          net.bridge.bridge-nf-call-iptables  = 1
+          net.ipv4.ip_forward                 = 1
+          net.bridge.bridge-nf-call-ip6tables = 1
+      notify:
+        - Apply sysctl settings
+
+    - name: Reload sysctl settings
+      command: sysctl --system
+
+    - name: Install Docker
+      shell: |
+        curl https://releases.rancher.com/install-docker/20.10.sh | sudo sh
+        sudo systemctl enable --now docker
+        sudo usermod -aG docker rancher
+        id rancher
+        sudo systemctl start docker
+
+    - name: Configure firewall
+      ufw:
+        rule: "{{ item }}/tcp"
+        state: allow
+      loop:
+        - 22
+        - 80
+        - 443
+        - 179
+        - 5473
+        - 6443
+        - 8472
+        - 2376
+        - 8472
+        - "2379:2380"
+        - 9099
+        - 10250
+        - 10251
+        - 10252
+        - 10254
+        - "30000:32767"
+
+    - name: Allow UDP ports
+      ufw:
+        rule: "{{ item }}/udp"
+        state: allow
+      loop:
+        - 8285
+        - 8472
+        - 4789
+        - "30000:32767"
+
+    - name: Reload UFW
+      shell: sudo ufw reload
+
+    - name: Generate SSH key pair
+      shell: ssh-keygen
+
+    - name: Copy SSH key to remote server
+      shell: ssh-copy-id 192.168.0.200
+
+    - name: Configure SSHd
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^AllowTcpForwarding'
+        line: 'AllowTcpForwarding yes'
+      notify:
+        - Restart SSH
+
+    - name: Create cluster.yml
+      blockinfile:
+        path: ~/cluster.yml
+        create: yes
+        block: |
+          nodes:
+            - address: 192.168.0.200
+              user: rancher
+              role:
+                - controlplane
+                - etcd
+                - worker
+
+    - name: Deploy Kubernetes cluster using RKE
+      shell: rke up --config ~/cluster.yml
+      args:
+        chdir: ~
+
+    - name: Set KUBECONFIG environment variable
+      lineinfile:
+        path: ~/.bashrc
+        line: 'export KUBECONFIG=$HOME/kube_config_cluster.yml'
+
+    - name: Source the updated bashrc
+      shell: source ~/.bashrc
+
+    - name: Check Kubernetes nodes
+      shell: kubectl get nodes
+
+    - name: Add Helm repo for Rancher
+      command: helm repo add rancher-latest https://releases.rancher.com/server-charts/latest
+
+    - name: Create namespace for Rancher
+      shell: kubectl create namespace cattle-system
+
+    - name: Install cert-manager
+      shell: |
+        kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.7.1/cert-manager.crds.yaml
+        helm repo add jetstack https://charts.jetstack.io
+        helm repo update
+        helm install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.7.1
+
+    - name: Deploy Rancher UI
+      shell: helm install rancher rancher-latest/rancher --namespace cattle-system --set hostname=rancher.tes.localorg
+
+    - name: Check Rancher deployment status
+      shell: kubectl -n cattle-system rollout status deploy/rancher
+
+    - name: Get Rancher deployment
+      shell: kubectl -n cattle-system get deploy rancher
+
+  handlers:
+    - name: Apply sysctl settings
+      command: sysctl --system
+
+    - name: Restart SSH
+      service:
+        name: ssh
+        state: restarted
