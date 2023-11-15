@@ -1,5 +1,5 @@
 ---
-- name: install kubectl rke helm
+- name: Install rancher
   hosts: localhost
   connection: local
   remote_user: root
@@ -55,9 +55,6 @@
         chmod 700 get_helm.sh
         ./get_helm.sh
         helm version
-    - name: upgrade
-      shell: |
-        sudo apt update && sudo apt -y full-upgrade
     
     - name: Install required packages
       apt:
@@ -124,20 +121,36 @@
         regexp: '^([^#].*?\sswap\s+.*)$'
         replace: '# \1'
     - name: Modify sysctl entries
-      sysctl:
-        name: '{{ item.key }}'
-        value: '{{ item.value }}'
-        sysctl_set: yes
-        state: present
-        reload: yes
-      with_items:
-        - {key: net.bridge.bridge-nf-call-ip6tables, value: 1}
-        - {key: net.bridge.bridge-nf-call-iptables,  value: 1}
-        - {key: net.ipv4.ip_forward,  value: 1}
-    - name: Install Docker
       shell: |
-        curl https://releases.rancher.com/install-docker/20.10.sh | sudo sh
-        sudo systemctl enable --now docker
+        cat >>/etc/sysctl.d/kubernetes.conf<<EOF
+        net.bridge.bridge-nf-call-ip6tables = 1
+        net.bridge.bridge-nf-call-iptables = 1
+        EOF
+        sysctl --system
+    
+    - name: Add Docker GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker APT repository
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
+        state: present
+
+    - name: Install Docker
+      apt:
+        name: docker-ce
+        state: present
+
+    - name: Start Docker service
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: add user Docker
+      shell: |
         sudo usermod -aG docker mediumady
         id mediumady
         sudo systemctl start docker
@@ -168,6 +181,10 @@
                 - controlplane
                 - etcd
                 - worker
+          network:
+              plugin: canal
+              options:
+                canal_flannel_backend_type: vxlan
 
     - name: Set owner and group for cluster.yml
       file:
@@ -176,36 +193,5 @@
         group: mediumady
         mode: '0644'
     
-    - name: Enable UFW
-      command: ufw enable
-
-    - name: Allow specified TCP ports
-      loop:
-        - 22
-        - 80
-        - 443
-        - 179
-        - 5473
-        - 6443
-        - 8472
-        - 2376
-        - 8472
-        - "2379:2380"
-        - 9099
-        - 10250
-        - 10251
-        - 10252
-        - 10254
-        - "30000:32767"
-      command: "ufw allow {{ item }}/tcp"
-
-    - name: Allow specified UDP ports
-      loop:
-        - 8285
-        - 8472
-        - 4789
-        - "30000:32767"
-      command: "ufw allow {{ item }}/udp"
-
-    - name: Reload UFW
-      command: ufw reload
+    - name: disable UFW
+      command: ufw disable
